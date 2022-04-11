@@ -117,6 +117,9 @@ class PandasetDataset(DatasetTemplate):
         points = self._get_lidar_points(info, pose)
         boxes, labels, zrot_world_to_ego = self._get_annotations(info, pose)
         pose_np = pose_dict_to_numpy(pose)
+        
+        if self.dataset_cfg.get('SHIFT_COOR', None):
+            points[:, 0:3] += np.array(self.dataset_cfg.SHIFT_COOR, dtype=np.float32)
 
         input_dict = {'points': points,
                       'gt_boxes': boxes,
@@ -130,7 +133,9 @@ class PandasetDataset(DatasetTemplate):
         # the gpu in pytorch
         # zrot_world_to_ego is propagated in order to be able to transform the
         # predicted yaws back to world coordinates
-
+        if self.dataset_cfg.get('SHIFT_COOR', None):
+            input_dict['gt_boxes'][:, 0:3] += self.dataset_cfg.SHIFT_COOR
+        
         data_dict = self.prepare_data(data_dict=input_dict)
 
         return data_dict
@@ -276,6 +281,9 @@ class PandasetDataset(DatasetTemplate):
             pred_labels = box_dict["pred_labels"].cpu().numpy()
             zrot = zrot_world_to_ego.cpu().numpy()
             pose_dict = pose_numpy_to_dict(pose.cpu().numpy())
+
+            if self.dataset_cfg.get('SHIFT_COOR', None):
+                pred_boxes[:, 0:3] -= self.dataset_cfg.SHIFT_COOR
 
             xs = pred_boxes[:, 0]
             ys = pred_boxes[:, 1]
