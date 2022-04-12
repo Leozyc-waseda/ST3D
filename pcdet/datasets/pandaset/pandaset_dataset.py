@@ -135,7 +135,8 @@ class PandasetDataset(DatasetTemplate):
         # predicted yaws back to world coordinates
         if self.dataset_cfg.get('SHIFT_COOR', None):
             input_dict['gt_boxes'][:, 0:3] += self.dataset_cfg.SHIFT_COOR
-        
+        if self.dataset_cfg.get('USE_PSEUDO_LABEL', None) and self.training:
+            input_dict['gt_boxes'] = None
         data_dict = self.prepare_data(data_dict=input_dict)
 
         return data_dict
